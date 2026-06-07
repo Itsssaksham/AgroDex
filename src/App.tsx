@@ -8,38 +8,40 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { HelmetProvider } from 'react-helmet-async';
 import { DEMO_VERIFY_URL } from '@/lib/demo';
-import Index from './pages/Index';
-import Login from './pages/Login';
-import AuthLanding from './pages/AuthLanding';
-import Profile from './pages/Profile';
-import SessionSettings from './pages/SessionSettings';
-import BatchRegistration from './pages/BatchRegistration';
-import BatchTokenize from './pages/BatchTokenize';
-import BatchVerify from './pages/BatchVerify';
-import TestHedera from './pages/TestHedera';
-import Dashboard from './pages/Dashboard';
-import { useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { lazy, Suspense } from 'react';
 
+// Route-based code splitting — each page loads only when navigated to
+const Index            = lazy(() => import('./pages/Index'));
+const Login            = lazy(() => import('./pages/Login'));
+const AuthLanding      = lazy(() => import('./pages/AuthLanding'));
+const Profile          = lazy(() => import('./pages/Profile'));
+const SessionSettings  = lazy(() => import('./pages/SessionSettings'));
+const BatchRegistration = lazy(() => import('./pages/BatchRegistration'));
+const BatchTokenize    = lazy(() => import('./pages/BatchTokenize'));
+const BatchVerify      = lazy(() => import('./pages/BatchVerify'));
+const TestHedera       = lazy(() => import('./pages/TestHedera'));
+const Dashboard        = lazy(() => import('./pages/Dashboard'));
 
 const queryClient = new QueryClient();
 
-const App = () => {
-  const { i18n } = useTranslation();
-
-  useEffect(() => {
-    document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
-  }, [i18n.language]);
-
+function PageLoader() {
   return (
-    <HelmetProvider>
-      <ThemeProvider defaultTheme="system" storageKey="agrodex-theme">
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <BrowserRouter>
-              <AuthProvider>
-                <WalletProvider>
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="animate-spin rounded-full h-10 w-10 border-4 border-green-500 border-t-transparent" />
+    </div>
+  );
+}
+
+const App = () => (
+  <HelmetProvider>
+    <ThemeProvider defaultTheme="system" storageKey="agrodex-theme">
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <BrowserRouter>
+            <AuthProvider>
+              <WalletProvider>
+                <Suspense fallback={<PageLoader />}>
                   <Routes>
                     <Route path="/login" element={<Login />} />
                     <Route path="/welcome" element={<AuthLanding />} />
@@ -54,14 +56,14 @@ const App = () => {
                     <Route path="/demo" element={<Navigate to={DEMO_VERIFY_URL} replace />} />
                     <Route path="/test-hedera" element={<ProtectedRoute><TestHedera /></ProtectedRoute>} />
                   </Routes>
-                </WalletProvider>
-              </AuthProvider>
-            </BrowserRouter>
-          </TooltipProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    </HelmetProvider>
-  );
-};
+                </Suspense>
+              </WalletProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
+  </HelmetProvider>
+);
 
 export default App;

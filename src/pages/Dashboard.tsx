@@ -72,7 +72,7 @@ interface AIInsight {
 
 export default function Dashboard() {
   
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const statsQuery = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: getDashboardStats,
@@ -104,7 +104,7 @@ export default function Dashboard() {
 
   const aiInsight = (statsData?.aiInsight ?? null) as AIInsight | null;
   const aiInsightText = aiInsight
-    ? lang === "en"
+    ? i18n.language === "en"
       ? aiInsight.insight_en || null
       : null
     : null;

@@ -3,12 +3,42 @@ import path from "path";
 import { defineConfig } from "vitest/config";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import componentTagger from "./plugins/component-tagger";
+// @ts-ignore
+import { visualizer } from "rollup-plugin-visualizer";
 
 export default defineConfig({
-  plugins: [react(), componentTagger(), nodePolyfills()],
+  plugins: [
+    react(),
+    componentTagger(),
+    nodePolyfills(),
+    visualizer({ filename: "dist/stats.html" }),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("@hashgraph") || id.includes("hashconnect") || id.includes("@walletconnect")) {
+              return "vendor-hedera";
+            }
+            if (id.includes("recharts") || id.includes("d3") || id.includes("victory")) {
+              return "vendor-charts";
+            }
+            if (id.includes("framer-motion")) {
+              return "vendor-motion";
+            }
+            if (id.includes("react-dom") || id.includes("react-router")) {
+              return "vendor-react";
+            }
+            return "vendor";
+          }
+        },
+      },
     },
   },
   test: {
@@ -39,11 +69,8 @@ export default defineConfig({
       timeout: 15000,
     },
     watch: {
-      // Use polling instead of native file system events (more reliable for some environments)
       usePolling: true,
-      // Wait 500ms before triggering a rebuild (gives time for all files to be flushed)
       interval: 500,
-      // Additional delay between file change detection and reload
       binaryInterval: 500,
     },
   },
