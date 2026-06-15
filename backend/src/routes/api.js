@@ -3,14 +3,20 @@ import axios from "axios";
 import QRCode from "qrcode";
 import { submitBatchData, fetchHCSMessage } from "../hcs.js";
 import { createBatchNFT, fetchNFTMetadata } from "../hts.js";
-import { analyzeBatch } from "../ai.js";
-import { insertBatch, insertToken, upsertVerification, getVerification, getToken } from "../db.js";
+import { supabase, insertBatch, insertToken, upsertVerification, getVerification, getToken } from "../db.js";
 import { env } from "../utils/config.js";
 import { requireAuth } from "../middleware/auth.js";
-import { analyzeImage, summarizeProvenance, dashboardInsight, healthCheck as geminiHealthCheck } from "../ai/gemini.js";
-import { supabase } from "../db.js";
+import {
+  analyzeBatch,
+  summarizeProvenance,
+  dashboardInsight,
+  healthCheck as geminiHealthCheck,
+} from "../ai/gemini.js";
 import { strictLimiter } from "../middleware/rateLimiter.js";
 import { validateRegisterBatch, validateTokenizeBatch, validateVerifyBatch } from "../middleware/validators.js";
+
+// Suppress unused import warning for fetchHCSMessage (used for future HCS message retrieval)
+void fetchHCSMessage;
 
 const router = express.Router();
 
@@ -104,14 +110,22 @@ router.post("/register-batch", requireAuth, strictLimiter, validateRegisterBatch
     if (!batchName || !location || !photoUrl) {
       return res.status(400).json({ error: "Missing required fields: batchName, location, photoUrl" });
     }
+
+    // AI batch metadata analysis using Gemini Flash Lite (optional, non-blocking)
+    // AI failures must never stop registration — wrapped in try/catch.
     let aiAnalysis = null;
     try {
-      const geminiResult = await analyzeImage(photoUrl);
+      const geminiResult = await analyzeBatch({
+        productType: batchName,
+        quantity: req.body.quantity || '0',
+        location,
+        harvestDate: req.body.harvestDate || new Date().toISOString().split('T')[0],
+      });
       if (!geminiResult.error) {
         aiAnalysis = { caption: geminiResult.caption, anomalies: geminiResult.anomalies, confidence: geminiResult.confidence, tags: geminiResult.tags, generatedAt: new Date().toISOString(), ms: geminiResult.ms };
       }
     } catch (error) {
-      console.warn("AI analysis failed, continuing without it:", error.message);
+      console.warn("AI batch analysis failed, continuing without it:", error.message);
     }
     const hcsResult = await submitBatchData({ batchName, location, photoUrl, aiAnalysis });
     const batchRecord = await insertBatch({ batch_name: batchName, location, photo_url: photoUrl, hcs_tx_id: hcsResult.transactionId, ai_analysis: aiAnalysis });
@@ -201,6 +215,7 @@ router.post("/tokenize-batch", requireAuth, strictLimiter, validateTokenizeBatch
     }
 
     const tokenRecord = await insertToken({ token_id: nftResult.tokenId, serial_number: nftResult.serialNumber, hcs_tx_ids: hcsTransactionIds });
+    void tokenRecord; // suppress unused warning
     
     if (aiSummary) {
       await upsertVerification({ token_id: nftResult.tokenId, serial_number: nftResult.serialNumber, trace: { ai: aiSummary, hcsTimeline } });

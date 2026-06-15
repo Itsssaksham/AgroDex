@@ -353,6 +353,7 @@ export default function BatchRegistration() {
                       </div>
                     </div>
 
+
                     <div className="mt-4 pt-4 border-t border-emerald-300 dark:border-emerald-900/30">
                       <p className="text-sm text-emerald-800 dark:text-emerald-400">
                         Your proof is saved. Copy the Transaction ID and proceed
