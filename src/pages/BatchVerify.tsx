@@ -392,20 +392,9 @@ export default function BatchVerify() {
                             No batch matches this identifier in AgroDex at the moment.
                           </p>
                           <div className="bg-white/50 dark:bg-slate-900/50 p-3 rounded border border-amber-200 dark:border-slate-800 mt-3 max-w-md">
-                            {params.batchId ? (
-                              <p className="text-xs font-semibold text-amber-850 dark:text-amber-400 font-mono break-all">
-                                Batch ID: {params.batchId}
-                              </p>
-                            ) : (
-                              <>
-                                <p className="text-xs font-semibold text-amber-850 dark:text-amber-400">
-                                  Token ID: {params.tokenId}
-                                </p>
-                                <p className="text-xs font-semibold text-amber-850 dark:text-amber-400">
-                                  Serial Number: {params.serialNumber}
-                                </p>
-                              </>
-                            )}
+                            <p className="text-xs font-semibold text-amber-850 dark:text-amber-400 font-mono break-all">
+                              Batch ID: {params.batchId || `${params.tokenId}/${params.serialNumber}`}
+                            </p>
                           </div>
                         </div>
                       </AlertDescription>
@@ -423,7 +412,7 @@ export default function BatchVerify() {
                           </p>
                           <div className="bg-white/50 dark:bg-slate-900/50 p-3 rounded border border-red-200 dark:border-slate-800 mt-3 max-w-md">
                             <p className="text-xs font-semibold text-red-850 dark:text-red-400 font-mono break-all">
-                              Batch ID: {params.batchId}
+                              Batch ID: {params.batchId || `${params.tokenId}/${params.serialNumber}`}
                             </p>
                           </div>
                         </div>
