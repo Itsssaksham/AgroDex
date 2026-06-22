@@ -30,14 +30,14 @@ export const HEDERA_TESTNET_PARAMS = {
  * Check if MetaMask or any EIP-1193 provider is installed
  */
 export function isMetaMaskInstalled(): boolean {
-  return typeof window !== "undefined" && typeof (window as Record<string, unknown>).ethereum !== "undefined";
+  return typeof window !== "undefined" && typeof (window as Record<string, any>).ethereum !== "undefined";
 }
 
 /**
  * Request network switch to Hedera Testnet
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function switchToHederaTestnet(provider: any = (window as Record<string, unknown>).ethereum): Promise<boolean> {
+export async function switchToHederaTestnet(provider: any = (window as Record<string, any>).ethereum): Promise<boolean> {
   if (!provider) return false;
 
   try {
@@ -80,6 +80,13 @@ export async function switchToHederaTestnet(provider: any = (window as Record<st
  * Sign in using MetaMask/EVM Wallet via Supabase Web3 Auth (EIP-4361)
  */
 export async function signInWithMetaMask(statement?: string): Promise<{ data: unknown; error: unknown }> {
+  if (!supabase) {
+    return {
+      data: null,
+      error: new Error("Supabase client is not initialized. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY."),
+    };
+  }
+
   if (!isMetaMaskInstalled()) {
     return {
       data: null,
@@ -126,6 +133,9 @@ export async function signInWithMetaMask(statement?: string): Promise<{ data: un
     const { data, error } = await supabase.auth.signInWithWeb3({
       chain: "ethereum",
       statement: statement || "Sign in to AgroDex with your MetaMask wallet.",
+      options: {
+        url: "https://agro-dex-1u85.vercel.app",
+      },
     });
 
     return { data, error };
