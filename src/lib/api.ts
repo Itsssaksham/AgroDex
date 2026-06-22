@@ -765,31 +765,26 @@ export const getAuditLogs = async (params: {
   
   const headers = await buildAuthHeaders();
   
-  const queryParams = new URLSearchParams({
-    page: String(page),
-    limit: String(limit),
-    sortBy,
-    sortOrder,
-    status,
-    search,
-  });
+  const { data: result, error } = await supabase.functions.invoke(
+    "audit-logs",
+    {
+      method: "GET",
+      queryParams: {
+        page: String(page),
+        limit: String(limit),
+        sortBy,
+        sortOrder,
+        status,
+        search,
+      },
+      headers,
+    }
+  );
 
-  const response = await fetch(`${API_BASE_URL}/api/audit-logs?${queryParams.toString()}`, {
-    method: "GET",
-    headers,
-  });
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let payload: any = null;
-  try {
-    payload = await response.json();
-  } catch {
-    /* ignore */
+  if (error) {
+    throw new Error(error.message || "Failed to fetch audit logs");
   }
 
-  if (!response.ok) {
-    throw new Error(payload?.error ?? `getAuditLogs failed: HTTP ${response.status}`);
-  }
-  return payload;
+  return result as AuditLogsResponse;
 };
 
